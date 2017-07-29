@@ -3,32 +3,107 @@
 
 colorDetector::colorDetector()
 {
-    ENABLE_IMSHOW = 1;
+    erodeSize = 1;
+    dilateSize = 1;
+    ENABLE_IMSHOW = 0;
     DETECT_MAX_OBJ = 0;
-    H_MIN = 52; H_MAX = 71;
-    S_MIN = 80; S_MAX = 256;
+    H_MIN = 0; H_MAX = 256;
+    S_MIN = 0; S_MAX = 256;
     V_MIN = 0; V_MAX = 256;
     MAX_NUM_OBJECTS=50;
     MIN_OBJECT_AREA = 640*480/2;
     MAX_OBJECT_AREA = 640*480;
-    trackbarWindowName = "Trackbar: HSV range tune";
+    trackbarWindowName = "Trackbar";
     createTrackbars();
 }
 
 colorDetector::colorDetector(string config_file)
 {
     //load params from config_file
-    ENABLE_IMSHOW = 1;
-    DETECT_MAX_OBJ = 0;
-    H_MIN = 52; H_MAX = 71;
-    S_MIN = 80; S_MAX = 256;
-    V_MIN = 0; V_MAX = 256;
-    MAX_NUM_OBJECTS=50;
-    MIN_OBJECT_AREA = 640*480/2;
-    MAX_OBJECT_AREA = 640*480;
-    trackbarWindowName = "Trackbar: HSV range tune";
+    load_config(config_file);
+    trackbarWindowName = config_file;
     createTrackbars();
 }
+
+
+string colorDetector::getFilenameBrowse()
+{
+    string filename;
+    char fn[1024];
+    FILE *f = popen("zenity --file-selection", "r");
+    fgets(fn, 1024, f);
+    filename = fn;
+    filename =  filename.substr(0, filename.size()-1);
+    return filename;
+}
+
+
+void colorDetector::reload_config(string filename /* = "" */)
+{
+    destroyWindow(trackbarWindowName);
+    
+    if (filename.empty())
+        filename = getFilenameBrowse();
+    
+    load_config(filename);
+    trackbarWindowName = filename;
+    createTrackbars();
+}
+
+
+void colorDetector::save_config(string filename /* = "" */)
+{
+    if (filename.empty())
+        filename = getFilenameBrowse();
+
+    if (filename.empty())
+        return;
+
+    FileStorage fs(filename, FileStorage::WRITE);
+
+    fs << "H_MIN" << H_MIN; fs << "H_MAX" << H_MAX;
+    fs << "S_MIN" << S_MIN; fs << "S_MAX" << S_MAX;
+    fs << "V_MIN" << V_MIN; fs << "V_MAX" << V_MAX;
+    fs << "DETECT_MAX_OBJ" << DETECT_MAX_OBJ;
+    fs << "ENABLE_IMSHOW" << ENABLE_IMSHOW;
+    fs << "dilateSize" << dilateSize;
+    fs << "erodeSize" << erodeSize;
+    fs << "MAX_NUM_OBJECTS" << MAX_NUM_OBJECTS;
+    fs << "MIN_OBJECT_AREA" << MIN_OBJECT_AREA;
+    fs << "MAX_OBJECT_AREA" << MAX_OBJECT_AREA;
+
+    fs.release();
+    cout << "saved config to " << filename << endl;
+}
+
+
+
+void colorDetector::load_config(string filename /* = "" */)
+{
+    if (filename.empty())
+        filename = getFilenameBrowse();
+    
+    if (filename.empty())
+        return;
+
+    FileStorage fs;
+    fs.open(filename, FileStorage::READ);
+    
+    fs["H_MIN"] >> H_MIN; fs["H_MAX"] >> H_MAX;
+    fs["S_MIN"] >> S_MIN; fs["S_MAX"] >> S_MAX;
+    fs["S_MIN"] >> V_MIN; fs["V_MAX"] >> V_MAX;
+    fs["DETECT_MAX_OBJ"] >> DETECT_MAX_OBJ;
+    fs["ENABLE_IMSHOW"] >> ENABLE_IMSHOW;
+    fs["dilateSize"] >> dilateSize;
+    fs["erodeSize"] >> erodeSize;
+    fs["MAX_NUM_OBJECTS"] >> MAX_NUM_OBJECTS;
+    fs["MIN_OBJECT_AREA"] >> MIN_OBJECT_AREA;
+    fs["MAX_OBJECT_AREA"] >> MAX_OBJECT_AREA;
+
+    fs.release();
+    cout << "finished loading config file " << filename << endl;
+}
+
 
 
 vector<Point> colorDetector::detect(Mat img)
@@ -60,8 +135,9 @@ vector<Point> colorDetector::detect(Mat img)
         thresholdRGB.copyTo(imgs(Rect(img.cols, 0, img.cols, img.rows)));
         resize(imgs, final_imgs, Size(), 0.5, 0.5);
         imshow("images: input  -->  threshold", final_imgs);
-        if ((c = cvWaitKey(30)) == 'q')
-            terminate();
+        cvWaitKey(1);
+        /*if ((c = cvWaitKey(1)) == 'q')
+            terminate();*/
     }
     else
         destroyWindow("images: input  -->  threshold");
@@ -91,19 +167,23 @@ void colorDetector::createTrackbars()
 	sprintf( TrackbarName, "V_MAX", V_MAX);
     sprintf( TrackbarName, "DETECT_MAX_OBJ", DETECT_MAX_OBJ);
     sprintf( TrackbarName, "ENABLE_IMSHOW", ENABLE_IMSHOW);
+    sprintf( TrackbarName, "dilateSize", dilateSize);
+    sprintf( TrackbarName, "erodeSize", erodeSize);
 	//create trackbars and insert them into window
 	//3 parameters are: the address of the variable that is changing when the trackbar is moved(eg.H_LOW),
 	//the max value the trackbar can move (eg. H_HIGH), 
 	//and the function that is called whenever the trackbar is moved(eg. on_trackbar)
 	//                                  ---->    ---->     ---->      
-    createTrackbar( "H_MIN", trackbarWindowName, &H_MIN, H_MAX, on_trackbar );
-    createTrackbar( "H_MAX", trackbarWindowName, &H_MAX, H_MAX, on_trackbar );
-    createTrackbar( "S_MIN", trackbarWindowName, &S_MIN, S_MAX, on_trackbar );
-    createTrackbar( "S_MAX", trackbarWindowName, &S_MAX, S_MAX, on_trackbar );
-    createTrackbar( "V_MIN", trackbarWindowName, &V_MIN, V_MAX, on_trackbar );
-    createTrackbar( "V_MAX", trackbarWindowName, &V_MAX, V_MAX, on_trackbar );
+    createTrackbar( "H_MIN", trackbarWindowName, &H_MIN, 256, on_trackbar );
+    createTrackbar( "H_MAX", trackbarWindowName, &H_MAX, 256, on_trackbar );
+    createTrackbar( "S_MIN", trackbarWindowName, &S_MIN, 256, on_trackbar );
+    createTrackbar( "S_MAX", trackbarWindowName, &S_MAX, 256, on_trackbar );
+    createTrackbar( "V_MIN", trackbarWindowName, &V_MIN, 256, on_trackbar );
+    createTrackbar( "V_MAX", trackbarWindowName, &V_MAX, 256, on_trackbar );
     createTrackbar( "DETECT_MAX_OBJ", trackbarWindowName, &DETECT_MAX_OBJ, 1, on_trackbar );
     createTrackbar( "ENABLE_IMSHOW", trackbarWindowName, &ENABLE_IMSHOW, 1, on_trackbar );
+    createTrackbar( "dilateSize", trackbarWindowName, &dilateSize, 50, on_trackbar );
+    createTrackbar( "erodeSize", trackbarWindowName, &erodeSize, 50, on_trackbar );
 }
 
 
@@ -112,10 +192,13 @@ void colorDetector::morphOps(Mat &thresh)
 {
 	//create structuring element that will be used to "dilate" and "erode" image.
 	//the element chosen here is a 3px by 3px rectangle
+    
+    erodeSize = (erodeSize > 0) ? erodeSize : 1;
+    dilateSize = (dilateSize > 0) ? dilateSize : 1;
 
-	Mat erodeElement = getStructuringElement( MORPH_RECT,Size(9,9));
+	Mat erodeElement = getStructuringElement( MORPH_RECT,Size(erodeSize,erodeSize));
     //dilate with larger element so make sure object is nicely visible
-	Mat dilateElement = getStructuringElement( MORPH_RECT,Size(50,50));
+	Mat dilateElement = getStructuringElement( MORPH_RECT,Size(dilateSize,dilateSize));
 
 	erode(thresh,thresh,erodeElement);
 	erode(thresh,thresh,erodeElement);
