@@ -36,7 +36,7 @@ int robot_bringup(string address /*= "192.168.100.10"*/, int port /*= 80*/)
 {
     myRobot = robotarm(address, port, "thisTraceFile.log", "thisCommLog.log");
     int con_code = myRobot.Connect(true);
-	myRobot.svon(true);
+    myRobot.svon(true);
 
     return con_code;
 }
@@ -47,12 +47,12 @@ void DLRarm::move_to(Pose pose)
 {
     JOINTMOTION mot;
     mot.Pos.Coord.x = pose.position.x;
-	mot.Pos.Coord.y = pose.position.y;
-	mot.Pos.Coord.z = pose.position.z;
-	mot.Pos.R.x = pose.orientation.x;
-	mot.Pos.R.y = pose.orientation.y;
-	mot.Pos.R.z = pose.orientation.z;
-	mot.MotionSpeedPerc = speed;
+    mot.Pos.Coord.y = pose.position.y;
+    mot.Pos.Coord.z = pose.position.z;
+    mot.Pos.R.x = pose.orientation.x;
+    mot.Pos.R.y = pose.orientation.y;
+    mot.Pos.R.z = pose.orientation.z;
+    mot.MotionSpeedPerc = speed;
 
     myRobot.movj(mot);
     waitUntilPosReached(pose.position);
@@ -75,14 +75,14 @@ void DLRarm::move_relative(Pose pose)
 void DLRarm::waitUntilPosReached(Point3f target_pos)
 {
     while (1 > 0)
-	{
+    {
         Point3f rob_pos(myRobot.rposc(0, false).Coord.x,
                         myRobot.rposc(0, false).Coord.y,
                         myRobot.rposc(0, false).Coord.z);
-        
+
         if (norm(rob_pose - target_pos) < 1)
             break;
 
-		usleep(3);
-	}
+        usleep(3);
+    }
 }
