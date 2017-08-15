@@ -1,0 +1,10 @@
+#ifndef ROBOTARM_GLOBAL_H
+#define ROBOTARM_GLOBAL_H
+//#include <QtCore/qglobal.h>
+#if defined(ROBOTARM_LIBRARY)
+#  define ROBOTARMSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define ROBOTARMSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // ROBOTARM_GLOBAL_H

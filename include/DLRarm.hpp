@@ -1,6 +1,8 @@
 #ifndef __DLRARM__
 #define __DLRARM__
 
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include <robotarm.h>
 #include <iostream>
 #include <unistd.h>
