@@ -8,16 +8,19 @@
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/videoio.hpp"
+#include "color_tracker.hpp"
 
 using namespace std;
 using namespace cv;
 
+enum class Suit { WHITE, BLACK, STRIPES, SOLIDS };
 
 typedef struct Ball_struct
 {
     Point center;
     float radius;
-    int suit;   //0:no one's ball (white/black) 1:stripes 2:solids
+    Suit suit;
+    Mat img;
 } Ball;
 
 
@@ -42,8 +45,8 @@ class ballDetector
         string getFilenameBrowse();
         vector<Ball> detect_circles(Mat img);
         vector<Ball> detect_suit(vector<Ball>);
-        bool isWhite(Ball ball);
-        bool isBlack(Ball ball);
+        void WhiteBlackPercentage(Ball ball, float& per_w, float& per_b);
+
 };
 
 

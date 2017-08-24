@@ -110,25 +110,19 @@ void on_trackbar2( int, void* )
 
 void ballDetector::createTrackbars()
 {//TODO (note to use trackbar2)
-	//create window for trackbars
     namedWindow(trackbarWindowName,0);
-	//create memory to store trackbar name on window
-	char TrackbarName[50];
-	sprintf( TrackbarName, "H_MIN", H_MIN);
-	sprintf( TrackbarName, "H_MAX", H_MAX);
-	sprintf( TrackbarName, "S_MIN", S_MIN);
-	sprintf( TrackbarName, "S_MAX", S_MAX);
-	sprintf( TrackbarName, "V_MIN", V_MIN);
-	sprintf( TrackbarName, "V_MAX", V_MAX);
+    char TrackbarName[50];
+    sprintf( TrackbarName, "H_MIN", H_MIN);
+    sprintf( TrackbarName, "H_MAX", H_MAX);
+    sprintf( TrackbarName, "S_MIN", S_MIN);
+    sprintf( TrackbarName, "S_MAX", S_MAX);
+    sprintf( TrackbarName, "V_MIN", V_MIN);
+    sprintf( TrackbarName, "V_MAX", V_MAX);
     sprintf( TrackbarName, "DETECT_MAX_OBJ", DETECT_MAX_OBJ);
     sprintf( TrackbarName, "ENABLE_IMSHOW", ENABLE_IMSHOW);
     sprintf( TrackbarName, "dilateSize", dilateSize);
     sprintf( TrackbarName, "erodeSize", erodeSize);
-	//create trackbars and insert them into window
-	//3 parameters are: the address of the variable that is changing when the trackbar is moved(eg.H_LOW),
-	//the max value the trackbar can move (eg. H_HIGH), 
-	//and the function that is called whenever the trackbar is moved(eg. on_trackbar)
-	//                                  ---->    ---->     ---->      
+ 
     createTrackbar( "H_MIN", trackbarWindowName, &H_MIN, 256, on_trackbar );
     createTrackbar( "H_MAX", trackbarWindowName, &H_MAX, 256, on_trackbar );
     createTrackbar( "S_MIN", trackbarWindowName, &S_MIN, 256, on_trackbar );
@@ -157,6 +151,8 @@ vector<Ball> ballDetector::detect_circles(Mat img)
         Ball ball;
         ball.center = Point(cvRound(circles[i][0]), cvRound(circles[i][1]));
         ball.radius = circles[i][2];
+        ball.image = Mat(img, Rect(ball.center.x-ball.radius, ball.center.y-ball.radius,
+                                    ball.radius*2, ball.radius*2));
         balls_vec.push_back(ball);
     }
 
@@ -167,16 +163,51 @@ vector<Ball> ballDetector::detect_circles(Mat img)
 vector<Ball> ballDetector::detect_suit(vector<Ball> balls)
 {
     //TODO
+    float per_w, per_b;
+    for (vector<Ball>::iterator it = balls.begin(); it != balls.end(); it++)
+    {
+        WhiteBlackPercentage(*it, per_w, per_b);
+        if (per_b > 0.8)
+            (*it).suit = Suit::BLACK;
+        else if (per_w > 0.85)
+            (*it).suit = Suit::WHITE;
+        else if (per_w > 0.3)
+            (*it).suit = Suit::STRIPES;
+        else
+            (*it).suit = Suit::SOLIDS;
+    }
+
+    return balls;
 }
 
 
-bool ballDetector::isWhite(Ball ball)
+void ballDetector::WhiteBlackPercentage(Ball ball, float& per_w, float& per_b)
 {
-    //TODO
-}
+    int count_w = 0;
+    int count_b = 0;
 
+    for (int i=0; i<ball.image.rows; i++)
+    {
+        for (int j=0; j<ball.image.cols; j++)
+        {
+            Vec3b intensity = ball.image.at<Vec3b>(j, i);
+            uchar blue = intensity.val[0];
+            uchar green = intensity.val[1];
+            uchar red = intensity.val[2];
 
-bool ballDetector::isBlack(Ball ball)
-{
-    //TODO
+            if (wb)
+            {
+                if (blue < 20 && red < 20 && red < 20)
+                    count_b ++;
+            }
+            else
+            {
+                if (blue > 230 && red > 230 && red > 230)
+                    count_w ++;
+            }
+        }
+    }
+
+    per_w =  count_w/(i*j);
+    per_b =  count_b/(i*j);
 }
