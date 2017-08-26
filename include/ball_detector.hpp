@@ -8,12 +8,14 @@
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/videoio.hpp"
-#include "color_tracker.hpp"
 
 using namespace std;
 using namespace cv;
 
-enum class Suit { WHITE, BLACK, STRIPES, SOLIDS };
+
+
+enum Suit { s_WHITE, s_BLACK, s_STRIPES, s_SOLIDS };
+
 
 typedef struct Ball_struct
 {
@@ -36,6 +38,7 @@ class ballDetector
     private:
         Mat image;
         vector<Ball> balls;
+        int ENABLE_IMSHOW;
         string trackbarWindowName;
         int ksize, kdev;    //GaussianBlur kernel size and std
         int min_dist, param_1, param_2;   //Hough params
